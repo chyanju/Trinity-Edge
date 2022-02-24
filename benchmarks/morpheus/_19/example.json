@@ -1,0 +1,26 @@
+{
+    "input0": {
+        "columns": ["12:10","12:20","12:30"],
+        "data": [
+            ["nuclear","nuclear","nuclear"],
+            ["nuclear","nuclear","child"],
+            ["child","child","child"],
+            ["child","child","child"],
+            ["child","child","child"],
+            ["nuclear and acquaintance","nuclear and acquaintance","nuclear and acquaintance"],
+            ["nuclear and acquaintance","nuclear and acquaintance","nuclear and acquaintance"],
+            ["notnotnot","notnotnot","notnotnot"],
+            ["nuclear","nuclear","nuclear"]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["value","12:10","12:20","12:30"],
+        "data": [
+            ["child",3,3,4],
+            ["notnotnot",1,1,1],
+            ["nuclear",3,3,2],
+            ["nuclear and acquaintance",2,2,2]
+        ]
+    }
+}

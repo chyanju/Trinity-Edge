@@ -1,0 +1,27 @@
+{
+    "input0": {
+        "columns": ["Which","Color","Response","Count"],
+        "data": [
+            ["Control","Red",2,10],
+            ["Control","Blue",3,20],
+            ["Treatment","Red",1,14],
+            ["Treatment","Blue",4,21]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["Color","Count_Control","Count_Treatment","Response_Control","Response_Treatment"],
+        "data": [
+                ["Blue",20,21,3,4],
+                ["Red",10,14,2,1]
+        ]
+    },
+    "solution":
+    [["function", "spread"],
+ [["function", "unite"],
+  [["function", "gather"], ["param", 0], ["enum", "ColList", ["-99", "-1"]]],
+  ["enum", "ColInt", "2"],
+  ["enum", "ColInt", "0"]],
+ ["enum", "ColInt", "2"],
+ ["enum", "ColInt", "1"]]
+}   

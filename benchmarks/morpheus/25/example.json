@@ -1,0 +1,22 @@
+{
+    "input0": {
+        "columns": ["a","b"],
+        "data": [
+            [1,1],
+            [1,2],
+            [4,3],
+            [4,3],
+            [1,2],
+            [1,2]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["key_ab","e"],
+        "data": [
+            ["1_2",3],
+            ["4_3",2]
+        ]
+    },
+    "solution": [["function", "group"], [["function", "unite"], [["function", "filter"], ["param", 0], ["enum", "BoolFunc", ">"], ["enum", "ColInt", "1"], ["enum", "ConstVal", "1@Int"]], ["enum", "ColInt", "0"], ["enum", "ColInt", "1"]], ["enum", "ColList", ["0"]], ["enum", "AggrFunc", "count"], ["enum", "ColInt", "0"]]
+}

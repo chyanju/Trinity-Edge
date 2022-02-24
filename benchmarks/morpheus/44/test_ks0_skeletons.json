@@ -1,0 +1,35 @@
+[
+    [
+        [ "group", 0, null, null, null ],
+        [ "mutate", "ref@0", null, null, null ]
+    ],
+    [
+        [ "group", 0, null, null, null ],
+        [ "spread", "ref@0", null, null ]
+    ],
+    [
+        [ "mutate", 0, null, null, null ],
+        [ "group", "ref@0", null, null, null ]
+    ],
+    [
+        [ "gather", 0, null ],
+        [ "group", "ref@0", null, null, null ]
+    ],
+    [
+        [ "filter", 0, null, null, null ],
+        [ "group", "ref@0", null, null, null ]
+    ],
+    [
+        [ "group", 0, null, null, null ],
+        [ "filter", "ref@0", null, null, null ]
+    ],
+    [
+        [ "group", 0, null, null, null ],
+        [ "select", "ref@0", null ]
+    ],
+    [
+        [ "gather", 0, null ],
+        [ "separate", "ref@0", null ],
+        [ "spread", "ref@1", null, null ]
+    ]
+]

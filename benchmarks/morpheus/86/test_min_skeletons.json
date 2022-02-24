@@ -1,0 +1,8 @@
+[
+    [
+        ["gather", 0, null],
+        ["unite", "ref@0", null, null],
+        ["mutate", "ref@1", null, null, null],
+        ["group", "ref@2", null, null, null]
+    ]
+]

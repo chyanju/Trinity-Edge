@@ -1,0 +1,7 @@
+[
+    [
+        ["separate", 0, null],
+        ["group", "ref@0", null, null, null],
+        ["spread", "ref@1", null, null]
+    ]
+]

@@ -1,0 +1,24 @@
+{
+    "input0": {
+        "columns": ["Timepoint","Group1","Error1_Group1","Group2","Error2_Group1"],
+        "data": [
+            [7,60,4,60,14],
+            [14,66,6,90,16]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["Timepoint","Group1","Group2","Error1","mGroup","Error2"],
+        "data": [
+            [7,60,60,4,"Group1",14],
+            [14,66,90,6,"Group1",16]
+        ]
+    },
+    "solution":
+    [["function", "spread"],
+ [["function", "separate"],
+  [["function", "gather"], ["param", 0], ["enum", "ColList", ["2", "4"]]],
+  ["enum", "ColInt", "3"]],
+ ["enum", "ColInt", "4"],
+ ["enum", "ColInt", "3"]]
+}

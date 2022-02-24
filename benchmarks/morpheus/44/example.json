@@ -1,0 +1,26 @@
+{
+    "input0": {
+        "columns": ["sbj","f1.avg","f1.sd","f2.avg","f2.sd","blabla"],
+        "data": [
+            ["A",10,6,50,10,"bA"],
+            ["B",12,5,70,11,"bB"],
+            ["C",20,7,20,8,"bC"],
+            ["D",22,8,22,9,"bD"]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["sbj","blabla","var","avg","sd"],
+        "data": [
+            ["A","bA","f1",10,6],
+            ["A","bA","f2",50,10],
+            ["B","bB","f1",12,5],
+            ["B","bB","f2",70,11],
+            ["C","bC","f1",20,7],
+            ["C","bC","f2",20,8],
+            ["D","bD","f1",22,8],
+            ["D","bD","f2",22,9]
+        ]
+    },
+    "solution": [["function", "spread"], [["function", "separate"], [["function", "gather"], ["param", 0], ["enum", "ColList", ["-99", "-5"]]], ["enum", "ColInt", "2"]], ["enum", "ColInt", "4"], ["enum", "ColInt", "2"]]
+}

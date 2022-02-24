@@ -1,0 +1,26 @@
+{
+    "input0": {
+        "columns": ["Title", "Rating", "Action", "Sci.Fi","Animation","Crime"],
+        "data": [
+                        ["Carrie",4,0,1,1,1],
+                        ["Fried-Green-Tomatoes",2,0,0,0,0],
+                        ["Amadeus",5,1,0,1,1],
+                        ["Amityville-Horror",1,0,0,0,1],
+                        ["Dracula",2,0,1,1,0],
+                        ["Speed",4,1,0,0,0],
+                        ["Zootopia",5,0,0,1,0],
+                        ["BreakingBad",5,1,0,0,1]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["genre", "average"],
+        "data": [
+                    ["Action", 4.6666667], 
+                    ["Animation", 4.0],
+                    ["Crime", 3.75],
+                    ["Sci.Fi", 3]
+        ]
+    },
+    "solution": [["function", "group"], [["function", "filter"], [["function", "gather"], ["param", 0], ["enum", "ColList", ["-99", "-1"]]], ["enum", "BoolFunc", ">"], ["enum", "ColInt", "3"], ["enum", "ConstVal", "0@Int"]], ["enum", "ColList", ["2"]], ["enum", "AggrFunc", "mean"], ["enum", "ColInt", "1"]]
+}

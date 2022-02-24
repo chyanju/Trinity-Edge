@@ -1,0 +1,26 @@
+[
+	[
+		["select", 0, null]
+	],
+	[
+		["unite", 0, null, null]
+	],
+	[
+		["separate", 0, null]
+	],
+	[
+		["gather", 0, null]
+	],
+	[
+		["spread", 0, null, null]
+	],
+	[
+		["mutate", 0, null, null, null]
+	],
+	[
+		["filter", 0, null, null, null]
+	],
+	[
+		["group", 0, null, null, null]
+	]
+]

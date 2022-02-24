@@ -1,0 +1,20 @@
+{
+    "input0": {
+        "columns": ["GeneID","D.1","T.1","D.2","T.2","D.8"],
+        "data": [
+            ["A2M",18,50,2,6,"A1"],
+            ["ABL1",20,48,4,8,"C1"]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["GeneID","pt.num","D","T","Ratio"],
+        "data": [
+            ["A2M","1",18,50,0.36],
+            ["A2M","2",2,6,0.333333333333333],
+            ["ABL1","1",20,48,0.416666666666667],
+            ["ABL1","2",4,8,0.5]
+        ]
+    },
+    "solution": [["function", "select"], [["function", "mutate"], [["function", "spread"], [["function", "separate"], [["function", "gather"], ["param", 0], ["enum", "ColList", ["-99", "-5"]]], ["enum", "ColInt", "2"]], ["enum", "ColInt", "3"], ["enum", "ColInt", "2"]], ["enum", "NumFunc", "/"], ["enum", "ColInt", "3"], ["enum", "ColInt", "4"]], ["enum", "ColList", ["-1"]]]
+}

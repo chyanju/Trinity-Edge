@@ -1,0 +1,25 @@
+{
+    "input0": {
+        "columns": ["Player","Team","Shots","Passes","Tackles"],
+        "data": [
+            ["Abdoun","Algeria",0,6,0],
+            ["Abe","Japan",3,101,14],
+            ["Abidal","France",0,91,6],
+            ["Abreu","Uruguay",5,15,0]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["Var","Mean"],
+        "data": [
+            ["Passes",53.25],
+            ["Tackles",5]
+        ]
+    },
+    "solution":
+    [["function", "group"],
+ [["function", "gather"], ["param", 0], ["enum", "ColList", ["3", "4"]]],
+ ["enum", "ColList", ["3"]],
+ ["enum", "AggrFunc", "mean"],
+ ["enum", "ColInt", "4"]]
+}

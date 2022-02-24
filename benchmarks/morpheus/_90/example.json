@@ -1,0 +1,30 @@
+{
+    "input0": {
+        "columns": ["name1","con1_1","con1_2","con1_3","con2_1","con2_2","con2_3"],
+        "data": [
+                    ["a",23,33,22,23,40,40],
+                    ["b",25,34,22,22,50,40],
+                    ["c",28,29,22,30,60,40]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["name1","con1","con2"],
+        "data": [
+            ["a",26,34.3333333333333],
+            ["b",27,37.3333333333333],
+            ["c",26.3333333333333,43.3333333333333]
+        ]
+    },
+    "solution":
+    [["function", "spread"],
+ [["function", "group"],
+  [["function", "separate"],
+   [["function", "gather"], ["param", 0], ["enum", "ColList", ["-99"]]],
+   ["enum", "ColInt", "1"]],
+  ["enum", "ColList", ["0", "2"]],
+  ["enum", "AggrFunc", "mean"],
+  ["enum", "ColInt", "1"]],
+ ["enum", "ColInt", "1"],
+ ["enum", "ColInt", "2"]]
+}

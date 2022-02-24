@@ -1,0 +1,27 @@
+{
+    "input0": {
+        "columns": ["Market","Variables","median","lower.limit","upper.limit"],
+        "data": [
+                ["market_1","var_1",2.78,2.71,2.72],
+                ["market_1","var_2",3.21,2.96,3.44],
+                ["market_2","var_1",2.95,2.79,3.11],
+                ["market_2","var_2",2.11,1.91,2.3]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["Market","var_1_lower.limit","var_1_median","var_1_upper.limit","var_2_lower.limit","var_2_median","var_2_upper.limit"],
+        "data": [
+                    ["market_1",2.71,2.78,2.72,2.96,3.21,3.44],
+                    ["market_2",2.79,2.95,3.11,1.91,2.11,2.3]
+        ]
+    },
+    "solution":
+    [["function", "spread"],
+ [["function", "unite"],
+  [["function", "gather"], ["param", 0], ["enum", "ColList", ["-99", "-1"]]],
+  ["enum", "ColInt", "1"],
+  ["enum", "ColInt", "2"]],
+ ["enum", "ColInt", "2"],
+ ["enum", "ColInt", "1"]]
+}

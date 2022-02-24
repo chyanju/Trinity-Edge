@@ -1,0 +1,34 @@
+{
+    "input0": {
+        "columns": ["a","b","d"],
+        "data": [
+            [1,1,0],
+            [1,1,200],
+            [1,1,300],
+            [1,1,0],
+            [1,1,600],
+            [1,2,0],
+            [1,2,100],
+            [1,2,200],
+            [1,3,0]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["a","b","mean_d"],
+        "data": [
+                [1,1,366.666666666667],
+                [1,2,150]
+        ]
+    },
+    "solution":
+    [["function", "group"],
+ [["function", "filter"],
+  ["param", 0],
+  ["enum", "BoolFunc", ">"],
+  ["enum", "ColInt", "2"],
+  ["enum", "ConstVal", "0@Int"]],
+ ["enum", "ColList", ["-2"]],
+ ["enum", "AggrFunc", "mean"],
+ ["enum", "ColInt", "2"]]
+}   

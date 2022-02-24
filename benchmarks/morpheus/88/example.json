@@ -1,0 +1,27 @@
+{
+    "input0": {
+        "columns": ["Id", "Group", "Var1", "Var2"],
+        "data": [
+                        [1,"A","good",10],
+                        [2,"A","good",2],
+                        [3,"A","bad",3],
+                        [4,"A","bad",2],
+                        [5,"B","good",10],
+                        [6,"B","bad",9],
+                        [7,"B","good",2],
+                        [8,"B","good",8],
+                        [9,"C","bad",7],
+                        [10,"C","good",5],
+                        [11,"C","bad",7],
+                        [12,"C","bad",9]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["Group","bad","good"],
+        "data": [
+                ["B",9,20]
+        ]
+    },
+    "solution": [["function", "spread"], [["function", "group"], [["function", "filter"], ["param", 0], ["enum", "BoolFunc", "=="], ["enum", "ColInt", "1"], ["enum", "ConstVal", "B@Str"]], ["enum", "ColList", ["1", "2"]], ["enum", "AggrFunc", "sum"], ["enum", "ColInt", "3"]], ["enum", "ColInt", "1"], ["enum", "ColInt", "2"]]
+}

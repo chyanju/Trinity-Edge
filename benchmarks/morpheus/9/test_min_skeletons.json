@@ -1,0 +1,7 @@
+[
+    [
+        ["spread", 0, null, null],
+        ["mutate", "ref@0", null, null, null],
+        ["select", "ref@1", null]
+    ]
+]

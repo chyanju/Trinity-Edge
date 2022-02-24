@@ -1,0 +1,42 @@
+{
+    "input0": {
+        "columns": ["sample_ID","site","species","TOT","inf_status"],
+        "data": [
+                    [382870,"site_3","Species_C",5,"negative"],
+                    [382872,"site_2","Species_B",1,"negative"],
+                    [487405,"site_3","Species_A",4,"positive"],
+                    [487405,"site_3","Species_A",1,"positive"],
+                    [382899,"site_1","Species_A",1,"positive"],
+                    [382900,"site_2","Species_A",1,"positive"],
+                    [382901,"site_3","Species_A",1,"positive"],
+                    [382902,"site_2","Species_A",5,"negative"],
+                    [382903,"site_1","Species_B",1,"negative"],
+                    [382904,"site_2","Species_C",9,"negative"],
+                    [382905,"site_3","Species_A",13,"negative"],
+                    [382906,"site_3","Species_B",1,"negative"],
+                    [382907,"site_1","Species_A",1,"negative"],
+                    [382908,"site_1","Species_C",1,"negative"]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["site","Species_A_negative","Species_A_positive","Species_B_negative","Species_C_negative"],
+        "data": [
+                    ["site_1",1,1,1,1],
+                    ["site_2",5,1,1,9],
+                    ["site_3",13,6,1,5]
+        ]
+    },
+    "solution":
+    [["function", "spread"],
+ [["function", "group"],
+  [["function", "unite"],
+   ["param", 0],
+   ["enum", "ColInt", "2"],
+   ["enum", "ColInt", "4"]],
+  ["enum", "ColList", ["1", "3"]],
+  ["enum", "AggrFunc", "sum"],
+  ["enum", "ColInt", "2"]],
+ ["enum", "ColInt", "1"],
+ ["enum", "ColInt", "2"]]
+}

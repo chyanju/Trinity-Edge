@@ -1,0 +1,35 @@
+{
+    "input0": {
+        "columns": ["V51","Hour","Group"],
+        "data": [
+            [1,"02:00:00","SBT"],
+            [1,"08:00:00","SBS"],
+            [9,"08:00:00","SBS"],
+            [4,"18:00:00","SBS"],
+            [2,"06:00:00","SBI"],
+            [6,"11:00:00","SBT"],
+            [4,"18:00:00","SBS"],
+            [6,"10:00:00","SBI"]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["sum"],
+        "data": [
+                [10],
+                [8]
+        ]
+    },
+    "solution":
+    [["function", "select"],
+ [["function", "group"],
+  [["function", "filter"],
+   ["param", 0],
+   ["enum", "BoolFunc", "=="],
+   ["enum", "ColInt", "2"],
+   ["enum", "ConstVal", "SBS@Str"]],
+  ["enum", "ColList", ["1"]],
+  ["enum", "AggrFunc", "sum"],
+  ["enum", "ColInt", "0"]],
+ ["enum", "ColList", ["-99"]]]
+}

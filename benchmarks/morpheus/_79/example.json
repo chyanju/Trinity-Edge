@@ -1,0 +1,18 @@
+{
+    "input0": {
+        "columns": ["id","dept","employee","salary"],
+        "data": [
+                [1,"CS","Yossi ",21000],
+                [2,"EE","Pitt ",23400],
+                [3,"Civil","Deepak",26800],
+                [4,"Physics","Golan",91000]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["mean"],
+        "data": [
+                [58900]
+        ]
+    }
+}

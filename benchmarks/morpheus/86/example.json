@@ -1,0 +1,22 @@
+{
+    "input0": {
+        "columns": ["ID","Name","A","B","C"],
+        "data": [
+                ["ID1","A1",1,5,9],
+                ["ID2","B1",2,6,10],
+                ["ID3","C1",3,7,11],
+                ["ID4","D1",4,8,12]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["ID","flag"],
+        "data": [
+                ["ID1",14],
+                ["ID2",16],
+                ["ID3",18],
+                ["ID4",20]
+        ]
+    },
+    "solution": [["function", "group"], [["function", "mutate"], [["function", "unite"], [["function", "gather"], ["param", 0], ["enum", "ColList", ["3", "4"]]], ["enum", "ColInt", "1"], ["enum", "ColInt", "3"]], ["enum", "NumFunc", "/"], ["enum", "ColInt", "1"], ["enum", "ColInt", "2"]], ["enum", "ColList", ["0"]], ["enum", "AggrFunc", "sum"], ["enum", "ColInt", "2"]]
+}

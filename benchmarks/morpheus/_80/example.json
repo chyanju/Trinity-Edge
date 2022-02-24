@@ -1,0 +1,34 @@
+{
+    "input0": {
+        "columns": ["order_id","Prod1","prod2","Prod3","Prod4","Prod5"],
+        "data": [
+                    ["A",1,0,1,1,1],
+                    ["B",0,0,1,1,0],
+                    ["C",1,1,0,1,1]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["order_id","var"],
+        "data": [
+                ["A","Prod1"],
+                ["C","Prod1"],
+                ["C","prod2"],
+                ["A","Prod3"],
+                ["B","Prod3"],
+                ["A","Prod4"],
+                ["B","Prod4"],
+                ["C","Prod4"],
+                ["A","Prod5"],
+                ["C","Prod5"]
+        ]
+    },
+    "solution":
+    [["function", "select"],
+ [["function", "filter"],
+  [["function", "gather"], ["param", 0], ["enum", "ColList", ["-99"]]],
+  ["enum", "BoolFunc", "=="],
+  ["enum", "ColInt", "2"],
+  ["enum", "ConstVal", "1@Int"]],
+ ["enum", "ColList", ["-2"]]]
+}

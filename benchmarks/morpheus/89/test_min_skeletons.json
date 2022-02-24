@@ -1,0 +1,8 @@
+[
+    [
+        ["filter", 0, null, null, null],
+        ["gather", "ref@0", null],
+        ["separate", "ref@1", null],
+        ["spread", "ref@2", null, null]
+    ]
+]

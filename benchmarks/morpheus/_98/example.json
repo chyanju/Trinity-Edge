@@ -1,0 +1,21 @@
+{
+    "input0": {
+        "columns": ["Title","MISC","Rating","Action","Sci.Fi"],
+        "data": [
+                        ["Carrie","A",4,10,20],
+                        ["Fried-Green-Tomatoes","B",2,11,21],
+                        ["Amadeus","C",5,12,22],
+                        ["Amityville-Horror","D",1,13,23],
+                        ["Dracula","E",2,14,24],
+                        ["Speed","F",4,15,25]
+    ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["key","newCol"],
+        "data": [
+                    ["Action",4],
+                    ["Sci.Fi",3]
+        ]
+    }
+}

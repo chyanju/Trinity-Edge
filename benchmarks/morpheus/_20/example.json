@@ -1,0 +1,27 @@
+{
+    "input0": {
+        "columns": ["group","times","action_rate","action_rate2"],
+        "data": [
+            ["a","before",0.1,0.2],
+            ["a","after",0.15,0.25],
+            ["b","before",0.2,0.3],
+            ["b","after",0.18,0.28]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["group","action_rate_after","action_rate_before","action_rate2_after","action_rate2_before"],
+        "data": [
+            ["a",0.15,0.1,0.25,0.2],
+            ["b",0.18,0.2,0.28,0.3]
+        ]
+    },
+    "solution":
+    [["function", "spread"],
+ [["function", "unite"],
+  [["function", "gather"], ["param", 0], ["enum", "ColList", ["-99", "-1"]]],
+  ["enum", "ColInt", "2"],
+  ["enum", "ColInt", "1"]],
+ ["enum", "ColInt", "2"],
+ ["enum", "ColInt", "1"]]
+}

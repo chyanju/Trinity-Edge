@@ -1,0 +1,110 @@
+[
+    [
+        [ "group", 0, null, null, null ],
+        [ "mutate", "ref@0", null, null, null ]
+    ],
+    [
+        [ "gather", 0, null ],
+        [ "unite", "ref@0", null, null ],
+        [ "spread", "ref@1", null, null ]
+    ],
+    [
+        [ "gather", 0, null ],
+        [ "separate", "ref@0", null ],
+        [ "spread", "ref@1", null, null ]
+    ],
+    [
+        [ "select", 0, null ],
+        [ "group", "ref@0", null, null, null ]
+    ],
+    [
+        [ "mutate", 0, null, null, null ],
+        [ "filter", "ref@0", null, null, null ],
+        [ "select", "ref@1", null ]
+    ],
+    [
+        [ "gather", 0, null ],
+        [ "mutate", "ref@0", null, null, null ],
+        [ "select", "ref@1", null ]
+    ],
+    [
+        [ "gather", 0, null ],
+        [ "filter", "ref@0", null, null, null ],
+        [ "select", "ref@1", null ]
+    ],
+    [
+        [ "gather", 0, null ],
+        [ "separate", "ref@0", null ],
+        [ "mutate", "ref@1", null, null, null ]
+    ],
+    [
+        [ "mutate", 0, null, null, null ],
+        [ "select", "ref@0", null ],
+        [ "spread", "ref@1", null, null ]
+    ],
+    [
+        [ "gather", 0, null ],
+        [ "separate", "ref@0", null ],
+        [ "filter", "ref@1", null, null, null ]
+    ],
+    [
+        [ "mutate", 0, null, null, null ],
+        [ "gather", "ref@0", null ],
+        [ "select", "ref@1", null ]
+    ],
+    [
+        [ "separate", 0, null ],
+        [ "spread", "ref@0", null, null ],
+        [ "select", "ref@1", null ]
+    ],
+    [
+        [ "mutate", 0, null, null, null ],
+        [ "gather", "ref@0", null ],
+        [ "filter", "ref@1", null, null, null ]
+    ],
+    [
+        [ "separate", 0, null ],
+        [ "spread", "ref@0", null, null ],
+        [ "mutate", "ref@1", null, null, null ]
+    ],
+    [
+        [ "mutate", 0, null, null, null ],
+        [ "separate", "ref@0", null ],
+        [ "spread", "ref@1", null, null ]
+    ],
+    [
+        [ "mutate", 0, null, null, null ],
+        [ "unite", "ref@0", null, null ],
+        [ "spread", "ref@1", null, null ]
+    ],
+    [
+        [ "separate", 0, null ],
+        [ "mutate", "ref@0", null, null, null ],
+        [ "select", "ref@1", null ]
+    ],
+    [
+        [ "select", 0, null ],
+        [ "mutate", "ref@0", null, null, null ],
+        [ "spread", "ref@1", null, null ]
+    ],
+    [
+        [ "unite", 0, null, null ],
+        [ "spread", "ref@0", null, null ],
+        [ "select", "ref@1", null ]
+    ],
+    [
+        [ "select", 0, null ],
+        [ "gather", "ref@0", null ],
+        [ "select", "ref@1", null ]
+    ],
+    [
+        [ "unite", 0, null, null ],
+        [ "spread", "ref@0", null, null ],
+        [ "mutate", "ref@1", null, null, null ]
+    ],
+    [
+        [ "spread", 0, null, null ],
+        [ "mutate", "ref@0", null, null, null ],
+        [ "select", "ref@1", null ]
+    ]
+]

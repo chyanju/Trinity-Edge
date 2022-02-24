@@ -1,0 +1,7 @@
+[
+    [
+        ["filter", 0, null, null, null],
+        ["unite", "ref@0", null, null],
+        ["group", "ref@1", null, null, null]
+    ]
+]

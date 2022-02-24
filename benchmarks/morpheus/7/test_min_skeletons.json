@@ -1,0 +1,9 @@
+[
+    [
+        ["gather", 0, null],
+        ["separate", "ref@0", null],
+        ["spread", "ref@1", null, null],
+        ["mutate", "ref@2", null, null, null],
+        ["select", "ref@3", null]
+    ]
+]

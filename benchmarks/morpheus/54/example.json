@@ -1,0 +1,25 @@
+{
+    "input0": {
+        "columns": ["sample_ID","site","species","TOT","inf_status"],
+        "data": [
+            [382870,"site_1","Species_B",1,"positive"],
+            [487405,"site_2","Species_A",1,"positive"],
+            [487405,"site_2","Species_B",1,"positive"],
+            [487405,"site_2","Species_A",1,"positive"],
+            [382899,"site_1","Species_A",1,"positive"],
+            [382899,"site_1","Species_C",1,"positive"],
+            [382899,"site_2","Species_C",10,"positive"],
+            [382899,"site_1","Species_D",1,"positive"],
+            [382899,"site_2","Species_D",20,"positive"]
+        ]
+    },
+    "input1": null,
+    "output": {
+        "columns": ["site","Species_A_positive","Species_B_positive","Species_C_positive","Species_D_positive"],
+        "data": [
+            ["site_1",1,1,1,1],
+            ["site_2",2,1,10,20]
+        ]
+    },
+    "solution": [["function", "spread"], [["function", "group"], [["function", "separate"], ["param", 0], ["enum", "ColInt", "2"]], ["enum", "ColList", ["1", "5"]], ["enum", "AggrFunc", "sum"], ["enum", "ColInt", "2"]], ["enum", "ColInt", "1"], ["enum", "ColInt", "2"]]
+}
