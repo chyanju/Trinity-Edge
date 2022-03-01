@@ -4,8 +4,7 @@
   	Trinity-Edge
   </h1>
 </div>
-
-Exploring faster deployments of Trinity.
+Exploring faster deployments of Trinity for the paper "[Trinity: An Extensible Synthesis Framework for Data Science](https://dl.acm.org/doi/10.14778/3352063.3352098)".
 
 This is a customized/optimized version of the original Trinity ([https://github.com/fredfeng/Trinity](https://github.com/fredfeng/Trinity)), with some additional features that support efficiency and research purpose.
 
@@ -54,3 +53,27 @@ optional arguments:
 - Sketch level CDCL is not yet ready.
 - Automatically synthesize the abstract interpreter based on the provided language specs.
 - To speed up parameter enumeration and improve efficacy, consider letting newly generated columns stay in front (not at the end).
+
+## Citation
+
+If you find our work and this tool useful in your research, please consider citing:
+
+```
+@article{DBLP:journals/pvldb/MartinsCCFD19,
+  author    = {Ruben Martins and
+               Jia Chen and
+               Yanju Chen and
+               Yu Feng and
+               Isil Dillig},
+  title     = {Trinity: An Extensible Synthesis Framework for Data Science},
+  journal   = {{PVLDB}},
+  volume    = {12},
+  number    = {12},
+  pages     = {1914--1917},
+  year      = {2019},
+  url       = {http://www.vldb.org/pvldb/vol12/p1914-martins.pdf},
+  timestamp = {Fri, 30 Aug 2019 13:15:08 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/pvldb/MartinsCCFD19},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+```
