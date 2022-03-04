@@ -124,6 +124,9 @@ class MorpheusInterpreter(PostOrderInterpreter):
         self._value_caching = True # turn on value caching
         self._cached_outputs = {}
 
+        # set to False if you are using the interpreter for debugging a single AST node
+        self._assert_enum = True # turn on parameter level CDCL
+
         # for hashing table (numpy) values
         self.strhash = lambda v: xxhash.xxh32(v, seed=4869).intdigest()
         self.inthash = hash
@@ -530,19 +533,20 @@ class MorpheusInterpreter(PostOrderInterpreter):
                     # good to set context if you are here
                     self._current_context += (node_collist.production.id,)
                     return self._cached_outputs[arg_sig]
-        
-        self.assertEnum(
-            node=node, 
-            context=self._current_context, 
-            comb=self._current_combination,
-            # this makes sure the original colist is not stupid
-            cond=lambda comb: ( 
-                lambda x: self.validate_collist(arg_ncol, x) 
-            )(
-                self._eval_enum_prod( self._spec.get_production( comb[node_collist.tag["cpos"]] ) )
-            ),
-            tag="select:0",
-        )
+
+        if self._assert_enum:
+            self.assertEnum(
+                node=node, 
+                context=self._current_context, 
+                comb=self._current_combination,
+                # this makes sure the original colist is not stupid
+                cond=lambda comb: ( 
+                    lambda x: self.validate_collist(arg_ncol, x) 
+                )(
+                    self._eval_enum_prod( self._spec.get_production( comb[node_collist.tag["cpos"]] ) )
+                ),
+                tag="select:0",
+            )
 
         # explain collist after the previous assertion holds
         arg_collist = self.explain_collist(arg_ncol, arg_collist)
@@ -590,19 +594,20 @@ class MorpheusInterpreter(PostOrderInterpreter):
                     self._current_context += (node_col0.production.id, node_col1.production.id)
                     return self._cached_outputs[arg_sig]
 
-        self.assertEnum(
-            node=node,
-            context=self._current_context, 
-            comb=self._current_combination,
-            # note: nested lambda to store temp variable
-            cond=lambda comb: (
-                lambda x0,x1: x0 < arg_ncol and x1 < arg_ncol and x0 != x1
-            )(
-                self._eval_enum_prod( self._spec.get_production( comb[node_col0.tag["cpos"]] ) ),
-                self._eval_enum_prod( self._spec.get_production( comb[node_col1.tag["cpos"]] ) )
-            ),
-            tag="unite:0",
-        )
+        if self._assert_enum:
+            self.assertEnum(
+                node=node,
+                context=self._current_context, 
+                comb=self._current_combination,
+                # note: nested lambda to store temp variable
+                cond=lambda comb: (
+                    lambda x0,x1: x0 < arg_ncol and x1 < arg_ncol and x0 != x1
+                )(
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col0.tag["cpos"]] ) ),
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col1.tag["cpos"]] ) )
+                ),
+                tag="unite:0",
+            )
 
         try:
             tmp_col0 = arg_tb.columns[arg_col0]
@@ -652,20 +657,21 @@ class MorpheusInterpreter(PostOrderInterpreter):
                     return self._cached_outputs[arg_sig]
 
         _current_dtypes = arg_tb.dtypes.tolist()
-        self.assertEnum(
-            node=node, 
-            context=self._current_context, 
-            comb=self._current_combination,
-            # lambda comb: (lambda x: x < arg_ncol and pd.api.types.is_string_dtype(arg_tb[arg_tb.columns[x]]) )(
-            # note: closure chooses dtype list to save memory?
-            # note: nested lambda to store temp variable
-            cond=lambda comb: (
-                lambda x: x < arg_ncol and pd.api.types.is_string_dtype(_current_dtypes[x]) 
-            )(
-                self._eval_enum_prod( self._spec.get_production( comb[node_col.tag["cpos"]] ) )
-            ),
-            tag="separate:0",
-        )
+        if self._assert_enum:
+            self.assertEnum(
+                node=node, 
+                context=self._current_context, 
+                comb=self._current_combination,
+                # lambda comb: (lambda x: x < arg_ncol and pd.api.types.is_string_dtype(arg_tb[arg_tb.columns[x]]) )(
+                # note: closure chooses dtype list to save memory?
+                # note: nested lambda to store temp variable
+                cond=lambda comb: (
+                    lambda x: x < arg_ncol and pd.api.types.is_string_dtype(_current_dtypes[x]) 
+                )(
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col.tag["cpos"]] ) )
+                ),
+                tag="separate:0",
+            )
 
         try:
             tmp_col = arg_tb.columns[arg_col]
@@ -733,21 +739,22 @@ class MorpheusInterpreter(PostOrderInterpreter):
                     return self._cached_outputs[arg_sig]
 
         _current_dtypes = arg_tb.dtypes.tolist()
-        self.assertEnum(
-            node=node, 
-            context=self._current_context, 
-            comb=self._current_combination,
-            # x0: this makes sure the original colist is not stupid
-            # self.explain_collist(x0): normal gather check
-            # note-important: to ensure x0 comes before self.explain_collist(x0) checks, merge them into one assertEnum
-            cond=lambda comb: ( 
-                lambda x0: self.validate_collist(arg_ncol, x0) and \
-                    len(set([_current_dtypes[p] for p in self.explain_collist(arg_ncol, x0)]))==1 
-                )(
-                    self._eval_enum_prod( self._spec.get_production( comb[node_collist.tag["cpos"]] ) )
-            ),
-            tag="gather:0",
-        )
+        if self._assert_enum:
+            self.assertEnum(
+                node=node, 
+                context=self._current_context, 
+                comb=self._current_combination,
+                # x0: this makes sure the original colist is not stupid
+                # self.explain_collist(x0): normal gather check
+                # note-important: to ensure x0 comes before self.explain_collist(x0) checks, merge them into one assertEnum
+                cond=lambda comb: ( 
+                    lambda x0: self.validate_collist(arg_ncol, x0) and \
+                        len(set([_current_dtypes[p] for p in self.explain_collist(arg_ncol, x0)]))==1 
+                    )(
+                        self._eval_enum_prod( self._spec.get_production( comb[node_collist.tag["cpos"]] ) )
+                ),
+                tag="gather:0",
+            )
 
         # explain collist after the previous assertion holds
         arg_collist = self.explain_collist(arg_ncol, arg_collist)
@@ -804,19 +811,20 @@ class MorpheusInterpreter(PostOrderInterpreter):
                     return self._cached_outputs[arg_sig]
 
         _current_dtypes = arg_tb.dtypes.tolist()
-        self.assertEnum(
-            node=node, 
-            context=self._current_context, 
-            comb=self._current_combination,
-            # note: nested lambda to store temp variable
-            cond=lambda comb: (
-                lambda x0, x1: (x0 < arg_ncol and x1 < arg_ncol and x0 != x1 and pd.api.types.is_string_dtype(_current_dtypes[x0]))
-            )(
-                self._eval_enum_prod( self._spec.get_production( comb[node_col0.tag["cpos"]] ) ),
-                self._eval_enum_prod( self._spec.get_production( comb[node_col1.tag["cpos"]] ) )
-            ),
-            tag="spread:0",
-        )
+        if self._assert_enum:
+            self.assertEnum(
+                node=node, 
+                context=self._current_context, 
+                comb=self._current_combination,
+                # note: nested lambda to store temp variable
+                cond=lambda comb: (
+                    lambda x0, x1: (x0 < arg_ncol and x1 < arg_ncol and x0 != x1 and pd.api.types.is_string_dtype(_current_dtypes[x0]))
+                )(
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col0.tag["cpos"]] ) ),
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col1.tag["cpos"]] ) )
+                ),
+                tag="spread:0",
+            )
 
         try:
             tmp_col0 = arg_tb.columns[arg_col0]
@@ -874,23 +882,24 @@ class MorpheusInterpreter(PostOrderInterpreter):
                     return self._cached_outputs[arg_sig]
 
         _current_dtypes = arg_tb.dtypes.tolist()
-        self.assertEnum(
-            node=node, 
-            context=self._current_context, 
-            comb=self._current_combination,
-            # note: nested lambda to store temp variable
-            cond=lambda comb: (
-                lambda x0, x1: x0 < arg_ncol and \
-                    x1 < arg_ncol and \
-                    x0 != x1 and \
-                    pd.api.types.is_numeric_dtype(_current_dtypes[x0]) and \
-                    pd.api.types.is_numeric_dtype(_current_dtypes[x1])
-            )(
-                self._eval_enum_prod( self._spec.get_production( comb[node_col0.tag["cpos"]] ) ),
-                self._eval_enum_prod( self._spec.get_production( comb[node_col1.tag["cpos"]] ) )
-            ),
-            tag="mutate:0",
-        )
+        if self._assert_enum:
+            self.assertEnum(
+                node=node, 
+                context=self._current_context, 
+                comb=self._current_combination,
+                # note: nested lambda to store temp variable
+                cond=lambda comb: (
+                    lambda x0, x1: x0 < arg_ncol and \
+                        x1 < arg_ncol and \
+                        x0 != x1 and \
+                        pd.api.types.is_numeric_dtype(_current_dtypes[x0]) and \
+                        pd.api.types.is_numeric_dtype(_current_dtypes[x1])
+                )(
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col0.tag["cpos"]] ) ),
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col1.tag["cpos"]] ) )
+                ),
+                tag="mutate:0",
+            )
 
         tmp_op = None
         if arg_op == "/":
@@ -948,19 +957,20 @@ class MorpheusInterpreter(PostOrderInterpreter):
                     return self._cached_outputs[arg_sig]
 
         _current_dtypes = arg_tb.dtypes.tolist()
-        self.assertEnum(
-            node=node, 
-            context=self._current_context, 
-            comb=self._current_combination,
-            # note: nested lambda to store temp variable
-            # lambda comb: (lambda x: x < arg_ncol and pd.api.types.is_numeric_dtype(_current_dtypes[x]) )(
-            cond=lambda comb: (
-                lambda x: x < arg_ncol
-            )(
-                self._eval_enum_prod( self._spec.get_production( comb[node_col.tag["cpos"]] ) )
-            ),
-            tag="filter:0",
-        )
+        if self._assert_enum:
+            self.assertEnum(
+                node=node, 
+                context=self._current_context, 
+                comb=self._current_combination,
+                # note: nested lambda to store temp variable
+                # lambda comb: (lambda x: x < arg_ncol and pd.api.types.is_numeric_dtype(_current_dtypes[x]) )(
+                cond=lambda comb: (
+                    lambda x: x < arg_ncol
+                )(
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col.tag["cpos"]] ) )
+                ),
+                tag="filter:0",
+            )
 
         tmp_op = None
         if arg_op == "==":
@@ -1021,29 +1031,30 @@ class MorpheusInterpreter(PostOrderInterpreter):
                     return self._cached_outputs[arg_sig]
 
         _current_dtypes = arg_tb.dtypes.tolist()
-        self.assertEnum(
-            node=node, 
-            context=self._current_context, 
-            comb=self._current_combination,
-            # this makes sure the original colist is not stupid
-            # note-important: to ensure x0 comes before self.explain_collist(x0)/y checks, merge them into one assertEnum
-            cond=lambda comb: (
-                # morpheus aggressive semantics
-                lambda x0,y: self.validate_collist(arg_ncol, x0) and \
-                    y < arg_ncol and \
-                    # note-important: consider splitting group into aggr and count
-                    # pd.api.types.is_numeric_dtype(_current_dtypes[y]) and \
-                    all(map(lambda z:z>=0, x0)) \
-                if self._config["aggressive_mode"] else \
-                lambda x0,y: self.validate_collist(arg_ncol, x0) and \
-                    # pd.api.types.is_numeric_dtype(_current_dtypes[y]) and \
-                    y < arg_ncol
-            )(
-                self._eval_enum_prod( self._spec.get_production( comb[node_collist.tag["cpos"]] ) ),
-                self._eval_enum_prod( self._spec.get_production( comb[node_col.tag["cpos"]] ) ),
-            ),
-            tag="group:0",
-        )
+        if self._assert_enum:
+            self.assertEnum(
+                node=node, 
+                context=self._current_context, 
+                comb=self._current_combination,
+                # this makes sure the original colist is not stupid
+                # note-important: to ensure x0 comes before self.explain_collist(x0)/y checks, merge them into one assertEnum
+                cond=lambda comb: (
+                    # morpheus aggressive semantics
+                    lambda x0,y: self.validate_collist(arg_ncol, x0) and \
+                        y < arg_ncol and \
+                        # note-important: consider splitting group into aggr and count
+                        # pd.api.types.is_numeric_dtype(_current_dtypes[y]) and \
+                        all(map(lambda z:z>=0, x0)) \
+                    if self._config["aggressive_mode"] else \
+                    lambda x0,y: self.validate_collist(arg_ncol, x0) and \
+                        # pd.api.types.is_numeric_dtype(_current_dtypes[y]) and \
+                        y < arg_ncol
+                )(
+                    self._eval_enum_prod( self._spec.get_production( comb[node_collist.tag["cpos"]] ) ),
+                    self._eval_enum_prod( self._spec.get_production( comb[node_col.tag["cpos"]] ) ),
+                ),
+                tag="group:0",
+            )
 
         # explain collist after the previous assertion holds
         arg_collist = self.explain_collist(arg_ncol, arg_collist)
