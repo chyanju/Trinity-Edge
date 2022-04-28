@@ -59,7 +59,7 @@ optional arguments:
 If you find our work and this tool useful in your research, please consider citing:
 
 ```
-@article{DBLP:journals/pvldb/MartinsCCFD19,
+@article{vldb19_trinity,
   author    = {Ruben Martins and
                Jia Chen and
                Yanju Chen and

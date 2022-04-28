@@ -247,7 +247,7 @@ class LineSkeletonIterator():
     - Int (which corresponds to reference token)
     This constructs a lazy iterator for a single full line skeleton.
     '''
-    def __init__(self, builder, name, skeleton):
+    def __init__(self, builder, name, skeleton, pools=None):
         self._skeleton = skeleton
         self._name = name # identifiable name of skeleton
         self._builder = builder
@@ -255,7 +255,11 @@ class LineSkeletonIterator():
         # initialization
         # first identify all the EnumTypes and construct a list of pools in a depth-first post-order way
         # -- the same way we construct a program in the future
-        self._pools = self.identify_enum_types(self._skeleton)
+        if pools is None:
+            self._pools = self.identify_enum_types(self._skeleton)
+        else:
+            # this constructs a list of Pools, given the provided list of lists of enums(prods)
+            self._pools = [Pool(p) for p in pools]
         self._pools_rinds = [
             {p[i].id:i for i in range(len(p))}
             for p in self._pools
@@ -471,9 +475,10 @@ class LineSkeletonIterator():
 
 class LineSkeletonEnumerator(Enumerator):
 
-    def __init__(self, spec: S.TrinitySpec, cands: List[Any]):
+    def __init__(self, spec: S.TrinitySpec, cands: List[Any], pools: List[Any] = None):
         '''
         Initialize an enumerator that takes as input a list of candidate programs written in line skeleton format.
+        pools: a list (of all cand) of lists (of all holes) of lists (of all terminals) of EnumProd
         '''
         self._spec = spec
         self._builder = D.Builder(spec)
@@ -501,11 +506,28 @@ class LineSkeletonEnumerator(Enumerator):
         self._cands = []
         for sk in cands:
             self._cands += self.canonicalize(sk)
-        # prepare iterators for every full line skeleton
-        self._iters = [ 
-            LineSkeletonIterator(self._builder, self.rec_list_to_tuple(self.pretty_print_ir1_cmd(sk)), sk)
-            for sk in self._cands 
-        ]
+        if pools is None:
+            # prepare iterators for every full line skeleton
+            self._iters = [ 
+                LineSkeletonIterator(self._builder, self.rec_list_to_tuple(self.pretty_print_ir1_cmd(sk)), sk)
+                for sk in self._cands 
+            ]
+        else:
+            # if a pool is provided for specifying priority of combs, 
+            # it's length should match the number of final candidate skeletons
+            if len(pools) != len(self._cands):
+                raise ValueError("Number of pools ({}) should match the number of final candidate skeletons ({}).".format(
+                    len(pools), len(self._cands)))
+            # prepare iterators for every full line skeleton
+            self._iters = [ 
+                LineSkeletonIterator(
+                    self._builder, 
+                    self.rec_list_to_tuple(self.pretty_print_ir1_cmd(self._cands[i])), 
+                    self._cands[i],
+                    pools[i],
+                )
+                for i in range(len(self._cands))
+            ]
 
         self._iter_ptr = 0
 
