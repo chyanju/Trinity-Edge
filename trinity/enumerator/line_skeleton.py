@@ -475,10 +475,14 @@ class LineSkeletonIterator():
 
 class LineSkeletonEnumerator(Enumerator):
 
-    def __init__(self, spec: S.TrinitySpec, cands: List[Any], pools: List[Any] = None):
+    def __init__(self, spec: S.TrinitySpec, cands: List[Any], pools: List[Any] = None, iccs: List[Any] = None):
         '''
         Initialize an enumerator that takes as input a list of candidate programs written in line skeleton format.
         pools: a list (of all cand) of lists (of all holes) of lists (of all terminals) of EnumProd
+               if provided, the enumerator will only use prods specified
+        iccs: detailed enumeration order, a list of tuples (of (skeleton index, icomb)), where icomb is the index comb of that iterator
+              if provided, the enumerator will enumerate according to the order specified
+        Specifying pools and iccs together to customize search space and search order.
         '''
         self._spec = spec
         self._builder = D.Builder(spec)
@@ -529,6 +533,9 @@ class LineSkeletonEnumerator(Enumerator):
                 for i in range(len(self._cands))
             ]
 
+        self._iccs = iccs
+        self._iccs_ptr = 0
+        # _iter_ptr points to the current skeleton
         self._iter_ptr = 0
 
         # note: skeleton level CDCL, list elements are lambda functions that match skeleton name
@@ -895,9 +902,10 @@ class LineSkeletonEnumerator(Enumerator):
         return True
 
     # returns (fc, prog)
-    # fc: is this the first candidate in the skeleton
-    @profiler.ctimer("next")
-    def next(self) -> Tuple[ bool, Optional[Node] ]:
+    # fc (bool): is this the first candidate in the skeleton
+    # seek for next concrete program in sequential way (by default, without iccs)
+    @profiler.ctimer("next_seq")
+    def next_seq(self) -> Tuple[ bool, Optional[Node] ]:
         try:
             # note: this is required, since update with SkeletonAssertion may move the ptr forward
             #       which may implicitly make the ptr exceed
@@ -909,16 +917,16 @@ class LineSkeletonEnumerator(Enumerator):
             #       this is required when the enumerator inherits an external KB
             if not self.check_iterator(self._iters[self._iter_ptr]):
                 self._iter_ptr += 1
-                return self.next()
+                return self.next_seq()
 
             fc, ret_prog = next(self._iters[self._iter_ptr])
             while ret_prog is None:
                 # this means the program fails the check
                 # then keep trying until the enumerated program is not None
                 fc, ret_prog = next(self._iters[self._iter_ptr])
+
             # attach skeleton information
             ret_prog._tag = {
-                # "skeleton": self.pretty_print_ir1_cmd(self._cands[self._iter_ptr]),
                 "skeleton": self.rec_list_to_tuple(self.pretty_print_ir1_cmd(self._cands[self._iter_ptr])),
                 "nslot": self.get_ir2_nslot(self._cands[self._iter_ptr]),
                 "iter_ptr": self._iter_ptr,
@@ -941,7 +949,79 @@ class LineSkeletonEnumerator(Enumerator):
                     else:
                         self._iter_ptr += 1
 
-                return self.next()
+                return self.next_seq()
+
+    # returns (fc, prog)
+    # fc (bool): is this the first candidate in the skeleton
+    # seek for next concrete program in designated way (by iccs)
+    @profiler.ctimer("next_ord")
+    def next_ord(self) -> Tuple[ bool, Optional[Node] ]:
+        try:
+            # note: this is required, since update with SkeletonAssertion may move the ptr forward
+            #       which may implicitly make the ptr exceed
+            if self._iccs_ptr >= len(self._iccs):
+                # out of bound, no need to do skeleton level deduction, so make fc False
+                return (False, None)
+
+            # grab the true pointers
+            tmp_iter_ptr = self._iccs[self._iccs_ptr][0]
+            tmp_icomb = self._iccs[self._iccs_ptr][1]
+            tmp_iter = self._iters[tmp_iter_ptr]
+
+            # note: cold start skeleton checking
+            #       this is required when the enumerator inherits an external KB
+            if not self.check_iterator(tmp_iter):
+                return self.next_ord()
+
+            # the iter method will construct ast for you, as well as a block tracker checking
+            ret_prog = tmp_iter[tmp_iter.icomb_to_ptr(tmp_icomb)]
+            # fixme: determine whether it's first candidate
+            #        if set to true, a skeleton level deduction will always be invoked
+            fc = True
+
+            self._iccs_ptr += 1
+
+            while ret_prog is None:
+                # this means the program fails the check
+                # then keep trying until the enumerated program is not None
+                return self.next_ord()
+
+            # attach skeleton information
+            ret_prog._tag = {
+                "skeleton": self.rec_list_to_tuple(self.pretty_print_ir1_cmd(self._cands[tmp_iter_ptr])),
+                "nslot": self.get_ir2_nslot(self._cands[tmp_iter_ptr]),
+                "iter_ptr": tmp_iter_ptr,
+            }
+
+            return (fc, ret_prog)
+        except StopIteration:
+            if self._iccs_ptr + 1 >= len(self._iccs):
+                # out of bound, no need to do skeleton level deduction, so make fc False
+                return (False, None)
+            else:
+                # move to next
+                self._iccs_ptr += 1
+                # test against skeleton level predicates until it finds one that fits
+                while True:
+                    tmp_iter_ptr = self._iccs[self._iccs_ptr][0]
+                    tmp_icomb = self._iccs[self._iccs_ptr][1]
+                    tmp_iter = self._iters[tmp_iter_ptr]
+                    if self.check_iterator(tmp_iter):
+                        break
+                    else:
+                        self._iccs_ptr += 1
+
+                return self.next_ord()
+
+    # seek for next concrete program
+    # if iccs is None, call the default next_seq
+    # otherwise, call next_ord
+    @profiler.ctimer("next")
+    def next(self) -> Tuple[ bool, Optional[Node] ]:
+        if self._iccs is None:
+            return self.next_seq()
+        else:
+            return self.next_ord()
 
     @profiler.ctimer("update")
     def update(self, core: Any=None) -> None:
