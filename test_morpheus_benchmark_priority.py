@@ -39,68 +39,41 @@ def load_example(arg_id):
 if __name__ == "__main__":
     logger.setLevel('DEBUG')
 
-    args = {
-        "dsl": "test_min",
-        "benchmark": 5,
-        "skeletons": "test_min",
-        "record": False,
-    }
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-b", "--benchmark", default=5, type=int, help="morpheus benchmark id, default: 5")
+    ap.add_argument("-d", "--dsl", default="test_min", type=str, choices=["test_min"], help="DSL definition to use, default: test_min")
+    ap.add_argument("-s", "--skeletons", default="test_min", choices=["test_min", "test_ks0", "ngram3_nojoin"], help="skeleton list to use, default: test_min")
+    ap.add_argument("--record", action="store_true", help="whether to enable recorder or not, default: False")
+    args = ap.parse_args()
+    print("# parsed arguments: {}".format(args))
 
     # load dsl spec
     spec = None
-    if args["dsl"].startswith("test"):
-        spec = S.parse_file("./benchmarks/morpheus/{}/{}.dsl".format(args["benchmark"], args["dsl"]))
+    if args.dsl.startswith("test"):
+        spec = S.parse_file("./benchmarks/morpheus/{}/{}.dsl".format(args.benchmark, args.dsl))
     else:
         raise Exception("You should not reach here.")
 
     # load benchmark
     print("# loading benchmark...")
-    benchmark_example = load_example(args["benchmark"])
-
+    benchmark_example = load_example(args.benchmark)
+   
     print("# input0 type: {}".format(benchmark_example.input[0].dtypes.tolist()))
     print("# input0 is: {}".format(benchmark_example.input[0]))
     print("# output type: {}".format(benchmark_example.output.dtypes.tolist()))
     print("# output is: {}".format(benchmark_example.output))
 
-
-    # wrap priority pools
-    # select(separate(gather(@param0, ['-99', '-1']), 2), ['-3'])
-    priority_pools = [
-        # only 1 skeleton, order list according to depth-first post-order order
-
-        # for: select(separate(gather(@param0, hole0), hole1), hole2)
-        [
-            # arguments for gather, hole0
-            [
-                spec.get_enum_production(spec.get_type("ColList"),['-99', '-2']),
-                spec.get_enum_production(spec.get_type("ColList"),['-99', '-1'])
-            ],
-            # arguments for separate, hole1
-            [
-                spec.get_enum_production(spec.get_type("ColInt"),"1"),
-                spec.get_enum_production(spec.get_type("ColInt"),"3"),
-                spec.get_enum_production(spec.get_type("ColInt"),"4"),
-                spec.get_enum_production(spec.get_type("ColInt"),"2"),
-            ],
-            # arguments for select, hole2
-            [
-                spec.get_enum_production(spec.get_type("ColList"),['-3'])
-            ]
-        ]
-    ]
-
-
     # load skeleton
     print("# loading skeleton list...")
     skeleton_list = None
-    if args["skeletons"].startswith("test"):
-        with open("./benchmarks/morpheus/{}/{}_skeletons.json".format(args["benchmark"], args["skeletons"]), "r") as f:
+    if args.skeletons.startswith("test"):
+        with open("./benchmarks/morpheus/{}/{}_skeletons.json".format(args.benchmark, args.skeletons), "r") as f:
             skeleton_list = json.load(f)
     else:
-        with open("./skeletons/{}_skeletons.json".format(args["skeletons"]), "r") as f:
+        with open("./skeletons/{}_skeletons.json".format(args.skeletons), "r") as f:
             skeleton_list = json.load(f)
 
-    enumerator = LineSkeletonEnumerator( spec=spec, cands=skeleton_list, pools=priority_pools )
+    enumerator = LineSkeletonEnumerator( spec=spec, cands=skeleton_list )
     interpreter = MorpheusInterpreter( spec=spec )
     # coarse: perform skeleton level abstract interpretation, throws SkeletonAssertion
     coarse_abstract_interpreter = MorpheusCoarseAbstractInterpreter()
@@ -120,9 +93,9 @@ if __name__ == "__main__":
     # ))
     # input("press to start")
     recorder = None
-    if args["record"]:
+    if args.record:
         recorder = get_recorder("test.b={}.d={}.s={}".format(
-            args["benchmark"], args["dsl"], args["skeletons"]
+            args.benchmark, args.dsl, args.skeletons
         ))
 
     decider = MorpheusDecider( 

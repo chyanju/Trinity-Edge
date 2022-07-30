@@ -16,229 +16,60 @@ from ..logger import get_logger
 from ..profiler import get_profiler
 
 from .enumerator import Enumerator
+from .line_skeleton import Pool, BlockTracker
 
-logger = get_logger("trinity.enumerator.line_skeleton")
-profiler = get_profiler("trinity.enumerator.line_skeleton")
+logger = get_logger("trinity.enumerator.line_skeleton_priority")
+profiler = get_profiler("trinity.enumerator.line_skeleton_priority")
 
-class Pool():
+# score to represent None when sorting
+INF_SCORE = 2**32-1
+
+class ProductionIterator():
     '''
-    A special class to store a set for combinations/enumerations.
-    https://stackoverflow.com/questions/1132941/least-astonishment-and-the-mutable-default-argument
+    A stateful iterator that maintains order of a certain type of productions.
+    (Note) This requires each production in the list is marked with score (a dynamic and extra field) to determine pop-out order.
+    Arguments:
+      - content: a list of trinity productions with extra score field
     '''
-    def __init__(self, pool):
-        self._pool = pool
+    def __init__(self, content: List[S.Production]):
+        # sort by score
+        self._v = sorted(content, key=lambda x:x.score)
+        self._ptr = 0
 
-    def __len__(self):
-        return len(self._pool)
-
-    def __getitem__(self, i):
-        return self._pool[i]
-
-    def append(self, p):
-        self._pool.append(p)
-
-    def __iadd__(self, other):
-        if isinstance(other, Pool):
-            self._pool += other._pool
-        elif isinstance(other, list):
-            self._pool += other
+    def pop(self):
+        '''Remove and return the top one'''
+        if self._ptr >= len(self._v):
+            # reached the end of available productions
+            return None
         else:
-            raise NotImplementedError("Pool += operator doesn't support type {}.".format(type(other)))
-        return self
+            self._ptr += 1
+            return self._v[self._ptr-1]
 
-class BlockTracker():
-    def __init__(self, choices):
-        for p in choices:
-            assert len(p) == len(set(p)), "Duplicate choices in one pool detected."
-        self._vchoices = [set(p) for p in choices] # for validation, you need set to make it faster
-        self._cchoices = choices # for choice, you need the original order
-        self._rchoices = [
-            {choices[i][j]:j for j in range(len(choices[i]))}
-            for i in range(len(choices))
-        ] # reverse indexing, given a pcomb, you can easily know its index comb
-        self._caps = [len(choices[i]) for i in range(len(choices))]
-        self._tracker = {}
+    def peek(self):
+        '''Return the top one'''
+        if self._ptr >= len(self._v):
+            # reached the end of available productions
+            return None
+        else:
+            return self._v[self._ptr]
 
-    def make_copy(self):
-        tmp_tracker = BlockTracker(copy.deepcopy(self._cchoices))
-        tmp_tracker._tracker = copy.deepcopy(self._tracker)
-        return tmp_tracker
+    def peek2(self):
+        '''Return the 2nd-to-top one'''
+        if self._ptr+1 >= len(self._v):
+            # reached the end of available productions
+            return None
+        else:
+            return self._v[self._ptr+1]
 
-    def validate_pcomb(self, pcomb):
-        assert len(pcomb) <= len(self._caps),\
-            "Length of partial combination is too long, expected: <={}, got: {}.".format(len(self._caps), len(pcomb))
-        for i in range(len(pcomb)):
-            assert isinstance(pcomb[i], int),\
-                "Unsupported type of choice at position {}, expected int, got: {}.".format(i, type(pcomb[i]))
-            assert pcomb[i] in self._vchoices[i],\
-                "Choice of posiiton {} of combination is invalid, expected one of: {}, got: {}.".format(i, self._vchoices[i], pcomb[i])
-        # if you are here, you are good to go
+    def reset(self):
+        '''Restart the iteration'''
+        self._ptr = 0
 
-    def add(self, pcomb):
-        # pcomb: partial combination, always contain concrete choice,
-        #        e.g., for caps of 6 positions, the followings are valid (within range):
-        #          - (2, 3): block pattern (2, 3, None, None, None, None)
-        #          - (2, 3, 5, 1, 5, 7): block specific combination
-        #        and the followings are incorrect:
-        #          - (2, 3)
-        #          - (1, 2, 3)
-        #          - (1, 2, 3, 4, 5, 6, 7, 8)
-        self.validate_pcomb(pcomb)
-        tmp_tracker = self._tracker
-        for i in range(len(pcomb)):
+    def terminate(self):
+        '''Stop the iteration'''
+        self._ptr = len(self._v)
 
-            if tmp_tracker is None:
-                # up to this level it's already pruned
-                # no need to insert anymore
-                return
-
-            tmp_key = pcomb[i]
-            if i==len(pcomb)-1:
-                # the last position in combination, block at this level
-                tmp_tracker[tmp_key] = None
-            else:
-                # not the last position, move on
-                if tmp_key not in tmp_tracker.keys():
-                    tmp_tracker[tmp_key] = {}
-                tmp_tracker = tmp_tracker[tmp_key]
-            
-        # try to see whether anything can be merged
-        self.update(self._tracker, pcomb, 0)
-        self.update_root()
-
-    def update_root(self):
-        # note that if self._tracker is None, then the whole skeleton is blocked
-        if len(self._tracker.keys()) >= self._caps[0]:
-            can_merge = True
-            for dkey in self._tracker.keys():
-                if self._tracker[dkey] is not None:
-                    can_merge = False
-            if can_merge:
-                self._tracker = None
-        return
-
-    def update(self, ptracker, pcomb, pos):
-        # recursive method, merge from bottom to top
-        # this queyr the same partial combination 
-        # and try to check whether any tracker state can be merged or not
-
-        # at this level, this call is trying to merge ptracker[pcomb[pos]]'s children
-        if pos+1 >= len(pcomb):
-            return
-
-        pkey = pcomb[pos]
-        self.update(ptracker[pkey], pcomb, pos+1)
-        if len(ptracker[pkey].keys()) >= self._caps[pos+1]:
-            # ready to merge since all the choices are explored
-            can_merge = True
-            for dkey in ptracker[pkey].keys():
-                if ptracker[pkey][dkey] is not None:
-                    can_merge = False
-            if can_merge:
-                # all of the keys are None (blocked), which means the parent should be blocked
-                # merge!
-                ptracker[pkey] = None
-        # else: cannot merge since not all the choices are explored
-
-        # done and return
-        return
-
-    def check(self, pcomb, return_root_cause_pos=False):
-        # check whether pcomb is feasible or not
-        # return True if feasible (not blocked), False if blocked
-
-        # print("checking pcomb={}, tracker={}".format(pcomb, self._tracker))
-        self.validate_pcomb(pcomb)
-
-        # start checking
-        if self._tracker is None:
-            # the whole skeleton is blocked
-            if return_root_cause_pos:
-                return (False, -1)
-            else:
-                return False
-
-        tmp_tracker = self._tracker
-        for i in range(len(pcomb)):
-            ikey = pcomb[i]
-            if ikey not in tmp_tracker.keys():
-                # no blocking record halfway, which means it's good
-                if return_root_cause_pos:
-                    return (True, i)
-                else:
-                    return True
-            else:
-                if tmp_tracker[ikey] is None:
-                    # has blocking record halfway, which means it's already blocked
-                    if return_root_cause_pos:
-                        return (False, i)
-                    else:
-                        return False
-                else:
-                    if i==len(pcomb)-1:
-                        # pcomb being checked is actually more abstract than dict
-                        # since tmp_tracker[ikey] is not None, it means not all of the next level are pruned
-                        # so here you should return True
-                        if return_root_cause_pos:
-                            return (True, i)
-                        else:
-                            return True
-                    else:
-                        # don't know at this level, move to next level
-                        tmp_tracker = tmp_tracker[ikey]
-
-        # if you return here, something is wrong
-        raise Exception("You should not reach here. This happens usually because the tail position is not None. Check your impl.")
-
-    def vcomb_advance(self, vcomb, pos):
-        # advance 1 step for the designated position
-        # if running out of choices, back track to previous position, respectively
-        curr_comb = list(vcomb)
-        curr_pos = pos
-        curr_val = curr_comb[curr_pos]
-        curr_c = self._rchoices[curr_pos][curr_val]
-        next_c = curr_c + 1
-        while next_c >= len(self._cchoices[curr_pos]):
-            # run out of choices at this level, back track to previous position
-            curr_pos -= 1
-            if curr_pos <= -1:
-                # run out of all choices at all positions
-                return None
-            curr_val = curr_comb[curr_pos]
-            curr_c = self._rchoices[curr_pos][curr_val]
-            next_c = curr_c + 1
-        # if you are here, you are good to move on
-        curr_comb[curr_pos] = self._cchoices[curr_pos][next_c]
-        for i in range(curr_pos+1, len(vcomb)):
-            # set to the 1st choice
-            curr_comb[i] = self._cchoices[i][0]
-        return curr_comb
-
-    def next_available(self, vcomb):
-        # returns the next available vcomb (starting from the given vcomb, including)
-        # or None if none is available.
-        # note: need to call update() before you call next_available(), since its efficiency
-        #       relies on the updated/sorted state of the tracker
-        curr_comb = list(vcomb) # make mutable
-        while True:
-            res, block_pos = self.check(curr_comb, return_root_cause_pos=True)
-            if block_pos==-1:
-                # the whole space is blocked, don't bother, just return
-                return None
-            if block_pos<-1 or block_pos>=len(curr_comb):
-                raise Exception("You should not reach here: block_pos is invalid, got: {}, curr_comb is {}.".format(block_pos, curr_comb))
-            if res:
-                # good to go
-                return tuple(curr_comb)
-            else:
-                # otherwise check the next choice in the block level and try
-                # move down 1 choice in the block pos, and reset all afterwards to initial choices
-                curr_comb = self.vcomb_advance(curr_comb, block_pos)
-                if curr_comb is None:
-                    # run out of choices
-                    return None
-
-class LineSkeletonIterator():
+class LineSkeletonPriorityIterator():
     '''
     A true lazy iterator for concretizing full skeleton. Note that this requires full skeleton where only the following tokens are allowed:
     - FunctionProduction
@@ -256,6 +87,11 @@ class LineSkeletonIterator():
         # first identify all the EnumTypes and construct a list of pools in a depth-first post-order way
         # -- the same way we construct a program in the future
         self._pools = self.identify_enum_types(self._skeleton)
+        # priority sort, requires a score field in productions
+        self._pools = [
+            Pool(sorted(p._pool, key=lambda x: x.score))
+            for p in self._pools
+        ]
         self._pools_rinds = [
             {p[i].id:i for i in range(len(p))}
             for p in self._pools
@@ -264,7 +100,6 @@ class LineSkeletonIterator():
         # the lazy iterator will use this indices instead of direct sampling on self._pools
         self._pseqs = [list(range(len(self._pools[i]))) for i in range(len(self._pools))]
         self._size = reduce(lambda x,y: x*len(y), self._pseqs, 1)
-        self._ptr = 0
 
         # precompute lazy product helpers
         # refer to: https://github.com/tylerburdsall/lazy-cartesian-product-python
@@ -276,6 +111,12 @@ class LineSkeletonIterator():
             self._divs.insert(0, factor)
             self._mods.insert(0, items)
             factor = factor * items
+
+        # create production iterators, just copy from pools
+        self._piters = [
+            ProductionIterator(p._pool)
+            for p in self._pools
+        ]
 
         # note: argument level conflict-driven learning
         #       key is context, value is condition predicate (lambda function)
@@ -289,37 +130,95 @@ class LineSkeletonIterator():
             for p in self._pools
         ])
 
-    def reset_ptr(self):
-        self._ptr = 0
-
     def __next__(self):
         return self.next()
 
-    # @profiler.ctimer("iterator.next")
-    # def next(self):
-    #     if self._ptr >= self._size:
-    #         raise StopIteration()
-    #     self._ptr += 1
-    #     # return self.__getitem__(self._ptr-1)
-    #     return (
-    #         self._ptr-1 == 0, # detect whether this is the first candidate in the skeleton
-    #         self.__getitem__(self._ptr-1) # the program itself
-    #     )
+    @profiler.ctimer("iterator.peek_curr_best")
+    def peek_curr_best(self):
+        '''Return the current best vcomb'''
+        ret = [p.peek() for p in self._piters]
+        if None in ret:
+            return None
+        else:
+            return tuple([p.id for p in ret])
 
-    @profiler.ctimer("iterator.next")
-    def next(self):
-        # note-important: normally spaces before self._ptr are all blocked (densely blocked),
-        #                 but in Keystroke setting, this is not always the case, since there are
-        #                 programs that can't be verified true nor false, but skipped
-        nx_vcomb = self._block_tracker.next_available(self.icomb_to_vcomb(self.ptr_to_icomb(self._ptr)))
+    @profiler.ctimer("iterator.pop_next_best")
+    def pop_next_best(self):
+        '''Remove the current best and return the next best vcomb'''
+        # ooooooooo...o
+        # |||||||||...|
+        # zzzzzzzzz...z
+        # choose one to pop to get the lowest total score
+        combs = [] # estimated scores for choosing to replace ith production
+        for i in range(len(self._piters)):
+            c = []
+            for j in range(len(self._piters)):
+                if i==j:
+                    # pseudo replace
+                    c.append(self._piters[j].peek2())
+                else:
+                    # don't replace
+                    c.append(self._piters[j].peek())
+            if None in c:
+                # (BUG) this is wrong, you can't skip it but need to consider other combination
+                # no more candidates
+                combs.append(None)
+            else:
+                combs.append(sum([d.score for d in c]))
+
+        # then choose the next best (least)
+        combs_inds = range(len(combs))
+        sorted_combs_inds = sorted(combs_inds, key=lambda x:INF_SCORE if combs[x] is None else combs[x])
+        selected = sorted_combs_inds[0]
+        if combs[selected] is None:
+            # no matter what you need to pop
+            self._piters[selected].pop()
+            return None
+        else:
+            # do the pop (state change) and return
+            self._piters[selected].pop()
+            return tuple([p.peek().id for p in self._piters])
+
+    # (note-important) this method is used to move to next best
+    #                  you should use peek_curr_best in the enumerator first
+    #                  and only call this when you don't want the current best
+    # (note-important) the difference between this and pop_next_best is that
+    #                  this may jump several cands to the next feasible and best
+    #                  but pop_next_best will only move one
+    #                  also this will give you a program
+    @profiler.ctimer("iterator.get_next_best")
+    def get_next_best(self):
+        '''Call pop_next_best until it moves to a feasible comb, return as program'''
+        nx_vcomb = self.pop_next_best()
         if nx_vcomb is None:
-            raise StopIteration()
+            return None
         nx_ptr = self.icomb_to_ptr(self.vcomb_to_icomb(nx_vcomb))
-        self._ptr = nx_ptr + 1
-        return (
-            nx_ptr == 0, # detect whether this is the first candidate in the skeleton
-            self.__getitem__(nx_ptr) # the program itself
-        )
+
+        if self.check_combination(nx_vcomb):
+            # don't remove the current one yet
+            # b/c you still need to compare with best ones from other skeletons
+            icomb = self.ptr_to_icomb(nx_ptr)
+            return self.construct_ast(self._skeleton, icomb)
+        else:
+            # infeasible, move to next one
+            return next()
+
+    # (note) this doesn't check feasibility
+    @profiler.ctimer("iterator.get_curr_best")
+    def get_curr_best(self):
+        '''Call peek_curr_best and return as program'''
+        nx_vcomb = self.peek_curr_best()
+        if nx_vcomb is None:
+            return None
+        nx_ptr = self.icomb_to_ptr(self.vcomb_to_icomb(nx_vcomb))
+        icomb = self.ptr_to_icomb(nx_ptr)
+        return self.construct_ast(self._skeleton, icomb)
+
+    # this is usually called when skeleton deduction fails
+    def terminate(self):
+        '''Terminate the iterator'''
+        for p in self._piters:
+            p.terminate()
 
     def identify_enum_types(self, sunit):
         ret_pools = []
@@ -342,9 +241,6 @@ class LineSkeletonIterator():
             raise NotImplementedError("Unsupported type for a full skeleton, got: {}.".format(type(sunit)))
         return ret_pools
 
-    def __len__(self):
-        return self._size
-
     def icomb_to_ptr(self, icomb):
         ptr = 0
         for i in range(len(icomb)-1, -1, -1):
@@ -364,25 +260,6 @@ class LineSkeletonIterator():
 
     def vcomb_to_icomb(self, vcomb):
         return tuple([self._pools_rinds[i][vcomb[i]] for i in range(len(vcomb))])
-
-    def __getitem__(self, n):
-        if n<0 or n>=self._size:
-            raise IndexError("i={}, size={}".format(n, self._size))
-
-        # first compute combination choices for every Pool
-        icomb = self.ptr_to_icomb(n)
-        # then construct the program recursively in a depth-first post-order way
-        # argument level conflict-driven learning: before construction, query the stored predicates
-        # note: convert the combination (ptr based) here into combination (prod id based)
-        # note-important:
-        #     a combination in interpreters is production id based
-        #     a combination here is pointer-to-iter based (see usage down in construct_ast)
-        #     so you need to covert it here to fit the predicate function returned from interpreter
-        vcomb = self.icomb_to_vcomb(icomb)
-        if self.check_combination(vcomb):
-            return self.construct_ast(self._skeleton, icomb)
-        else:
-            return None
 
     @profiler.ctimer("iterator.check_combination")
     def check_combination(self, vcomb):
@@ -469,7 +346,7 @@ class LineSkeletonIterator():
         else:
             raise NotImplementedError("Unsupported core type, got: {}.".format(type(core)))
 
-class LineSkeletonEnumerator(Enumerator):
+class LineSkeletonPriorityEnumerator(Enumerator):
 
     def __init__(self, spec: S.TrinitySpec, cands: List[Any]):
         '''
@@ -502,12 +379,13 @@ class LineSkeletonEnumerator(Enumerator):
         for sk in cands:
             self._cands += self.canonicalize(sk)
         # prepare iterators for every full line skeleton
-        self._iters = [ 
-            LineSkeletonIterator(self._builder, self.rec_list_to_tuple(self.pretty_print_ir1_cmd(sk)), sk)
+        self._iters = [
+            LineSkeletonPriorityIterator(self._builder, self.rec_list_to_tuple(self.pretty_print_ir1_cmd(sk)), sk)
             for sk in self._cands 
         ]
 
         self._iter_ptr = 0
+        self._iter_checked = [False for _ in self._iters] # skeleton checked state for each skeleton
 
         # note: skeleton level CDCL, list elements are lambda functions that match skeleton name
         #       e.g., the following represents a predicate (skeleton pattern):
@@ -857,69 +735,77 @@ class LineSkeletonEnumerator(Enumerator):
                 raise NotImplementedError("Invalid type: {}.".format(type(cmd[i])))
         return ret_nslot
 
-    # def convert_ir2_to_sketch(self, cmds):
-    #     return [cmds[i][0].name for i in range(len(cmds))]
-
     @profiler.ctimer("check_iterator")
     def check_iterator(self, it):
-        # for p in self._imported_skeleton_patterns:
-        #     # print("# [debug] imported checking: p={}, it={}".format(p, it._name))
-        #     if self.rec_skeleton_pattern_matching(p, it._name):
-        #         return False
         for p in self._skeleton_patterns:
             # print("# [debug] collected checking: p={}, it={}".format(p, it._name))
             if self.rec_skeleton_pattern_matching(p, it._name):
                 return False
         return True
 
+    def compute_cand_score(self, prog):
+        def do_compute(gg):
+            if gg.is_apply():
+                # go to children
+                cscore = 0
+                for p in gg.children:
+                    cscore += do_compute(p)
+                return cscore + gg.production.score
+            else:
+                # no children
+                return gg.production.score
+
+        if prog is None:
+            return None
+        else:
+            # return 0
+            return do_compute(prog)
+
     # returns (fc, prog)
     # fc: is this the first candidate in the skeleton
     @profiler.ctimer("next")
     def next(self) -> Tuple[ bool, Optional[Node] ]:
-        try:
-            # note: this is required, since update with SkeletonAssertion may move the ptr forward
-            #       which may implicitly make the ptr exceed
-            if self._iter_ptr >= len(self._iters):
-                # out of bound, no need to do skeleton level deduction, so make fc False
-                return (False, None)
+        # first get all best programs from all skeletons
+        best_cands = [p.get_curr_best() for p in self._iters]
+        best_scores = [self.compute_cand_score(p) for p in best_cands]
+        best_inds = range(len(best_scores))
+        sorted_best_inds = sorted(best_inds, key=lambda x: INF_SCORE if best_scores[x] is None else best_scores[x])
+        self._iter_ptr = sorted_best_inds[0]
 
-            # note: cold start skeleton checking
-            #       this is required when the enumerator inherits an external KB
+        print("# best score is: {}, from: {}".format(best_scores[self._iter_ptr], best_scores))
+        if best_scores[self._iter_ptr] is None:
+            # end of iteration
+            return (False, None)
+
+        # confirmed selection, the target iterator should pop
+        self._iters[self._iter_ptr].pop_next_best()
+        ret_prog = best_cands[self._iter_ptr]
+        logger.debug("---> {}".format(ret_prog))
+
+        # note: cold start skeleton checking
+        #       this is required when the enumerator inherits an external KB
+        fc = None
+        if not self._iter_checked[self._iter_ptr]:
+            fc = True # require skeleton level deduction
+            self._iter_checked[self._iter_ptr] = True # set to True (checked) first
             if not self.check_iterator(self._iters[self._iter_ptr]):
-                self._iter_ptr += 1
+                # invalid skeleton, invalidate it and move to next
+                self._iters[self._iter_ptr].terminate()
                 return self.next()
+            # else: move on
+        else:
+            fc = False
 
-            fc, ret_prog = next(self._iters[self._iter_ptr])
-            while ret_prog is None:
-                # this means the program fails the check
-                # then keep trying until the enumerated program is not None
-                fc, ret_prog = next(self._iters[self._iter_ptr])
-            # attach skeleton information
-            ret_prog._tag = {
-                # "skeleton": self.pretty_print_ir1_cmd(self._cands[self._iter_ptr]),
-                "skeleton": self.rec_list_to_tuple(self.pretty_print_ir1_cmd(self._cands[self._iter_ptr])),
-                "nslot": self.get_ir2_nslot(self._cands[self._iter_ptr]),
-                "iter_ptr": self._iter_ptr,
-            }
+        # attach skeleton information
+        ret_prog._tag = {
+            "skeleton": self.rec_list_to_tuple(self.pretty_print_ir1_cmd(self._cands[self._iter_ptr])),
+            "nslot": self.get_ir2_nslot(self._cands[self._iter_ptr]),
+            "iter_ptr": self._iter_ptr,
+        }
 
-            # print("# [debug] iter_ptr: {}".format(self._iter_ptr))
-            # logger.debug("iter_ptr: {}".format(self._iter_ptr))
-            return (fc, ret_prog)
-        except StopIteration:
-            if self._iter_ptr + 1 >= len(self._iters):
-                # out of bound, no need to do skeleton level deduction, so make fc False
-                return (False, None)
-            else:
-                # move to next skeleton
-                self._iter_ptr += 1
-                # test against skeleton level predicates until it finds one that fits
-                while True:
-                    if self.check_iterator(self._iters[self._iter_ptr]):
-                        break
-                    else:
-                        self._iter_ptr += 1
-
-                return self.next()
+        # print("# [debug] iter_ptr: {}".format(self._iter_ptr))
+        # logger.debug("iter_ptr: {}".format(self._iter_ptr))
+        return (fc, ret_prog)
 
     @profiler.ctimer("update")
     def update(self, core: Any=None) -> None:
@@ -938,6 +824,7 @@ class LineSkeletonEnumerator(Enumerator):
             self._skeleton_patterns.append(core._prog._tag["skeleton"])
             # by default, when throwing a SkeletonAssertion, it implies that you skip the current skeleton already
             # self._iter_ptr += 1
+            pass
         elif isinstance(core, ComponentError):
             # similar to EnumAssertion
             self._iters[self._iter_ptr].update(core)

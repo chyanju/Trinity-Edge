@@ -1,9 +1,10 @@
 <div align="left">
   <h1>
-    <img src="./resources/logo_matrix.png" width=50>
+    <img src="./resources/trinity-edge-white.png" width=50>
   	Trinity-Edge
   </h1>
 </div>
+
 Exploring faster deployments of Trinity for the paper "[Trinity: An Extensible Synthesis Framework for Data Science](https://dl.acm.org/doi/10.14778/3352063.3352098)".
 
 This is a customized/optimized version of the original Trinity ([https://github.com/fredfeng/Trinity](https://github.com/fredfeng/Trinity)), with some additional features that support efficiency and research purpose.
